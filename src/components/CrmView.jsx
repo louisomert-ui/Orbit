@@ -1,125 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Users, Briefcase, UserPlus, Search as SearchIcon, Plus, Trash2, Mail, Phone, Layout as LayoutIcon } from 'lucide-react';
+import { Briefcase, Search as SearchIcon, Plus, Trash2 } from 'lucide-react';
 
-const initialCrmData = {
-    projects: [
-        { id: 'p1', name: 'Refonte Site Web', client: 'Acme Corp', status: 'En cours', value: '5000€', deadline: '2026-12-01' }
-    ],
-    clients: [
-        { id: 'c1', name: 'Acme Corp', contact: 'Alice Dupont', email: 'alice@acme.com', phone: '01 23 45 67 89' }
-    ],
-    prospects: [
-        { id: 'pr1', name: 'Stark Industries', contact: 'Tony Stark', email: 'tony@stark.com', status: 'Chaud', value: '15000€' }
-    ]
-};
+const initialCrmData = [
+    { id: 'p1', name: 'Refonte Site Web', contact: 'Alice Dupont - Acme Corp', status: 'En cours', deadline: '2026-12-01', comment: 'En attente de validation maquettes' }
+];
 
 const CrmView = () => {
     const [crmData, setCrmData] = useState(() => {
-        const saved = localStorage.getItem('pro-organizer-crm-data');
+        const saved = localStorage.getItem('pro-organizer-crm-data-v2');
         return saved ? JSON.parse(saved) : initialCrmData;
     });
 
-    const [activeTab, setActiveTab] = useState('projects'); // 'projects', 'clients', 'prospects'
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('pro-organizer-crm-data', JSON.stringify(crmData));
+        localStorage.setItem('pro-organizer-crm-data-v2', JSON.stringify(crmData));
     }, [crmData]);
 
     const handleAddItem = () => {
-        const newItem = { id: uuidv4(), name: 'Nouvel élément' };
+        const newItem = {
+            id: uuidv4(),
+            name: 'Nouveau projet',
+            contact: '',
+            status: 'Nouveau',
+            deadline: '',
+            comment: ''
+        };
 
-        if (activeTab === 'projects') {
-            newItem.client = ''; newItem.status = 'À faire'; newItem.value = '0€'; newItem.deadline = '';
-        } else if (activeTab === 'clients') {
-            newItem.contact = ''; newItem.email = ''; newItem.phone = '';
-        } else if (activeTab === 'prospects') {
-            newItem.contact = ''; newItem.email = ''; newItem.status = 'Nouveau'; newItem.value = '0€';
-        }
-
-        setCrmData({
-            ...crmData,
-            [activeTab]: [...crmData[activeTab], newItem]
-        });
+        setCrmData([...crmData, newItem]);
     };
 
     const handleUpdateItem = (id, field, value) => {
-        setCrmData({
-            ...crmData,
-            [activeTab]: crmData[activeTab].map(item =>
-                item.id === id ? { ...item, [field]: value } : item
-            )
-        });
+        setCrmData(crmData.map(item =>
+            item.id === id ? { ...item, [field]: value } : item
+        ));
     };
 
     const handleDeleteItem = (id) => {
         if (confirm('Voulez-vous vraiment supprimer cet élément ?')) {
-            setCrmData({
-                ...crmData,
-                [activeTab]: crmData[activeTab].filter(item => item.id !== id)
-            });
+            setCrmData(crmData.filter(item => item.id !== id));
         }
     };
 
-    const currentData = crmData[activeTab].filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const currentData = crmData.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.contact.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const getColumns = () => {
-        if (activeTab === 'projects') return ['Nom du Projet', 'Client', 'Statut', 'Valeur', 'Échéance', 'Actions'];
-        if (activeTab === 'clients') return ['Nom de l\'Entreprise', 'Contact', 'Email', 'Téléphone', '', 'Actions'];
-        if (activeTab === 'prospects') return ['Nom du Prospect', 'Contact', 'Email', 'Statut', 'Valeur Est.', 'Actions'];
-        return [];
-    };
-
-    const titleMap = {
-        projects: 'Gestion des Projets',
-        clients: 'Annuaire Clients',
-        prospects: 'Suivi des Prospects'
-    };
+    const columns = ['Nom du Projet', 'Contact', 'Statut', 'Échéance', 'Commentaire', 'Actions'];
 
     const renderCell = (item, colIndex) => {
         const inputStyle = {
             border: 'none', background: 'transparent', width: '100%', outline: 'none', fontSize: '14px', color: 'var(--color-text-main)'
         };
 
-        if (activeTab === 'projects') {
-            if (colIndex === 0) return <input style={inputStyle} value={item.name} onChange={e => handleUpdateItem(item.id, 'name', e.target.value)} />;
-            if (colIndex === 1) return <input style={inputStyle} value={item.client} onChange={e => handleUpdateItem(item.id, 'client', e.target.value)} placeholder="Client..." />;
-            if (colIndex === 2) return (
-                <select style={{ ...inputStyle, cursor: 'pointer', appearance: 'none' }} value={item.status} onChange={e => handleUpdateItem(item.id, 'status', e.target.value)}>
-                    <option value="À faire">À faire</option>
-                    <option value="En cours">En cours</option>
-                    <option value="Terminé">Terminé</option>
-                </select>
-            );
-            if (colIndex === 3) return <input style={inputStyle} value={item.value} onChange={e => handleUpdateItem(item.id, 'value', e.target.value)} placeholder="€" />;
-            if (colIndex === 4) return <input type="date" style={inputStyle} value={item.deadline} onChange={e => handleUpdateItem(item.id, 'deadline', e.target.value)} />;
-        }
+        if (colIndex === 0) return <input style={{ ...inputStyle, fontWeight: '500' }} value={item.name} onChange={e => handleUpdateItem(item.id, 'name', e.target.value)} />;
+        if (colIndex === 1) return <input style={inputStyle} value={item.contact} onChange={e => handleUpdateItem(item.id, 'contact', e.target.value)} placeholder="Nom du contact..." />;
+        if (colIndex === 2) return (
+            <select style={{ ...inputStyle, cursor: 'pointer', appearance: 'none', color: item.status === 'Gagné' ? '#00c875' : item.status === 'Nouveau' ? '#0073ea' : 'inherit' }} value={item.status} onChange={e => handleUpdateItem(item.id, 'status', e.target.value)}>
+                <option value="Nouveau">Nouveau</option>
+                <option value="En cours">En cours</option>
+                <option value="En attente">En attente</option>
+                <option value="Gagné">Gagné</option>
+                <option value="Perdu">Perdu</option>
+            </select>
+        );
+        if (colIndex === 3) return <input type="date" style={inputStyle} value={item.deadline || ''} onChange={e => handleUpdateItem(item.id, 'deadline', e.target.value)} />;
+        if (colIndex === 4) return <input style={{ ...inputStyle, color: 'var(--color-text-secondary)', fontSize: '13px' }} value={item.comment} onChange={e => handleUpdateItem(item.id, 'comment', e.target.value)} placeholder="Ajouter une note..." />;
 
-        if (activeTab === 'clients') {
-            if (colIndex === 0) return <input style={{ ...inputStyle, fontWeight: '500' }} value={item.name} onChange={e => handleUpdateItem(item.id, 'name', e.target.value)} />;
-            if (colIndex === 1) return <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><UserPlus size={14} color="var(--color-text-secondary)" /><input style={inputStyle} value={item.contact} onChange={e => handleUpdateItem(item.id, 'contact', e.target.value)} placeholder="Nom du contact" /></div>;
-            if (colIndex === 2) return <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Mail size={14} color="var(--color-text-secondary)" /><input style={inputStyle} value={item.email} onChange={e => handleUpdateItem(item.id, 'email', e.target.value)} placeholder="email..." /></div>;
-            if (colIndex === 3) return <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Phone size={14} color="var(--color-text-secondary)" /><input style={inputStyle} value={item.phone} onChange={e => handleUpdateItem(item.id, 'phone', e.target.value)} placeholder="téléphone..." /></div>;
-            if (colIndex === 4) return null;
-        }
-
-        if (activeTab === 'prospects') {
-            if (colIndex === 0) return <input style={{ ...inputStyle, fontWeight: '500' }} value={item.name} onChange={e => handleUpdateItem(item.id, 'name', e.target.value)} />;
-            if (colIndex === 1) return <input style={inputStyle} value={item.contact} onChange={e => handleUpdateItem(item.id, 'contact', e.target.value)} placeholder="Contact..." />;
-            if (colIndex === 2) return <input style={inputStyle} value={item.email} onChange={e => handleUpdateItem(item.id, 'email', e.target.value)} placeholder="Email..." />;
-            if (colIndex === 3) return (
-                <select style={{ ...inputStyle, cursor: 'pointer', appearance: 'none', color: item.status === 'Chaud' ? '#e2445c' : item.status === 'Froid' ? '#0073ea' : 'inherit' }} value={item.status} onChange={e => handleUpdateItem(item.id, 'status', e.target.value)}>
-                    <option value="Nouveau">Nouveau</option>
-                    <option value="Froid">Froid</option>
-                    <option value="Tiède">Tiède</option>
-                    <option value="Chaud">Chaud</option>
-                </select>
-            );
-            if (colIndex === 4) return <input style={inputStyle} value={item.value} onChange={e => handleUpdateItem(item.id, 'value', e.target.value)} placeholder="€" />;
-        }
         return null;
     };
 
@@ -129,57 +78,25 @@ const CrmView = () => {
                 <div style={{ marginBottom: '16px' }}>
                     <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <Briefcase size={28} color="var(--color-primary)" />
-                        CRM & Business
+                        CRM
                     </h1>
                     <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginTop: '4px' }}>
-                        Gérez vos clients, suivez vos prospects et pilotez vos projets.
+                        Gérez vos projets et le suivi client en un seul endroit.
                     </p>
                 </div>
 
-                {/* CRM Tabs */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0', borderBottom: '1px solid var(--color-border)' }}>
-                    <button
-                        onClick={() => setActiveTab('projects')}
-                        style={{
-                            padding: '8px 16px', borderBottom: activeTab === 'projects' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                            color: activeTab === 'projects' ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontSize: '14px',
-                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: activeTab === 'projects' ? '500' : '400', cursor: 'pointer', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none'
-                        }}
-                    >
-                        <LayoutIcon size={16} /> Projets
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('clients')}
-                        style={{
-                            padding: '8px 16px', borderBottom: activeTab === 'clients' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                            color: activeTab === 'clients' ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontSize: '14px',
-                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: activeTab === 'clients' ? '500' : '400', cursor: 'pointer', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none'
-                        }}
-                    >
-                        <Users size={16} /> Clients
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('prospects')}
-                        style={{
-                            padding: '8px 16px', borderBottom: activeTab === 'prospects' ? '2px solid var(--color-primary)' : '2px solid transparent',
-                            color: activeTab === 'prospects' ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontSize: '14px',
-                            display: 'flex', alignItems: 'center', gap: '6px', fontWeight: activeTab === 'prospects' ? '500' : '400', cursor: 'pointer', background: 'none', borderTop: 'none', borderLeft: 'none', borderRight: 'none'
-                        }}
-                    >
-                        <UserPlus size={16} /> Prospects
-                    </button>
-
-                    <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--color-border)', margin: '0 16px' }}></div>
+                {/* Toolbar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
 
                     {/* Search */}
-                    <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--color-bg-app)', padding: '4px 12px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'var(--color-bg-app)', padding: '6px 12px', borderRadius: '4px', border: '1px solid var(--color-border)' }}>
                         <SearchIcon size={14} color="var(--color-text-secondary)" />
                         <input
                             type="text"
-                            placeholder="Rechercher..."
+                            placeholder="Rechercher par projet ou contact..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            style={{ border: 'none', background: 'transparent', outline: 'none', paddingLeft: '8px', fontSize: '13px' }}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', paddingLeft: '8px', fontSize: '13px', width: '250px' }}
                         />
                     </div>
                 </div>
@@ -189,8 +106,8 @@ const CrmView = () => {
                 <div style={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
 
                     {/* Table Header */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr) 60px', backgroundColor: 'var(--color-bg-surface)', borderBottom: '1px solid var(--color-border)', padding: '12px 16px' }}>
-                        {getColumns().map((col, idx) => (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 2fr 60px', backgroundColor: 'var(--color-bg-surface)', borderBottom: '1px solid var(--color-border)', padding: '12px 16px' }}>
+                        {columns.map((col, idx) => (
                             <div key={idx} style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--color-text-secondary)', textAlign: col === 'Actions' ? 'center' : 'left' }}>
                                 {col}
                             </div>
@@ -205,7 +122,7 @@ const CrmView = () => {
                             </div>
                         ) : (
                             currentData.map((item) => (
-                                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr) 60px', borderBottom: '1px solid var(--color-border)', padding: '8px 16px', alignItems: 'center', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 1fr 2fr 60px', borderBottom: '1px solid var(--color-border)', padding: '8px 16px', alignItems: 'center', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                                     <div>{renderCell(item, 0)}</div>
                                     <div>{renderCell(item, 1)}</div>
                                     <div>{renderCell(item, 2)}</div>
@@ -234,7 +151,7 @@ const CrmView = () => {
                             onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--color-primary-light)'}
                             onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
-                            <Plus size={16} /> Ajouter {activeTab === 'projects' ? 'un projet' : activeTab === 'clients' ? 'un client' : 'un prospect'}
+                            <Plus size={16} /> Ajouter une ligne
                         </button>
                     </div>
 
