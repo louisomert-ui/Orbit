@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Plus, Trash2, Bell } from 'lucide-react';
+import { Layout, Plus, Trash2, Bell, CheckSquare, Briefcase } from 'lucide-react';
 import { getAlerts } from '../utils/alertUtils';
 
-const Sidebar = ({ boards, activeBoardId, onSelectBoard, onAddBoard, onDeleteBoard }) => {
+const Sidebar = ({ activeAppTab, onChangeAppTab, boards, activeBoardId, onSelectBoard, onAddBoard, onDeleteBoard }) => {
     const [showNotifications, setShowNotifications] = useState(false);
 
     const alerts = useMemo(() => getAlerts(boards), [boards]);
@@ -119,105 +119,147 @@ const Sidebar = ({ boards, activeBoardId, onSelectBoard, onAddBoard, onDeleteBoa
                 </div>
             </div>
 
-            {/* Add Board Button */}
-            <div style={{ padding: '0 20px 10px' }}>
-                <button
-                    onClick={onAddBoard}
+            {/* App Nav (Modules) */}
+            <div style={{ padding: '0 12px 16px 12px', borderBottom: '1px solid var(--color-border)', marginBottom: '16px' }}>
+                <div
+                    onClick={() => onChangeAppTab('todo')}
                     style={{
-                        width: '100%',
-                        padding: '10px',
-                        backgroundColor: 'var(--color-primary-light)',
-                        color: 'var(--color-primary)',
-                        border: 'none',
+                        padding: '10px 12px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
                         borderRadius: 'var(--radius-md)',
                         cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: '500',
-                        fontSize: '14px',
-                        transition: 'all 0.2s'
+                        backgroundColor: activeAppTab === 'todo' ? 'var(--color-primary-light)' : 'transparent',
+                        color: activeAppTab === 'todo' ? 'var(--color-primary)' : 'var(--color-text-main)',
+                        fontWeight: activeAppTab === 'todo' ? '600' : '400',
+                        fontSize: '14px', transition: 'all 0.2s', marginBottom: '4px'
                     }}
+                    onMouseOver={(e) => { if (activeAppTab !== 'todo') e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)' }}
+                    onMouseOut={(e) => { if (activeAppTab !== 'todo') e.currentTarget.style.backgroundColor = 'transparent' }}
                 >
-                    <Plus size={16} /> Nouveau Tableau
-                </button>
+                    <CheckSquare size={18} />
+                    Gestion des Tâches
+                </div>
+                <div
+                    onClick={() => onChangeAppTab('crm')}
+                    style={{
+                        padding: '10px 12px',
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer',
+                        backgroundColor: activeAppTab === 'crm' ? 'var(--color-primary-light)' : 'transparent',
+                        color: activeAppTab === 'crm' ? 'var(--color-primary)' : 'var(--color-text-main)',
+                        fontWeight: activeAppTab === 'crm' ? '600' : '400',
+                        fontSize: '14px', transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => { if (activeAppTab !== 'crm') e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)' }}
+                    onMouseOut={(e) => { if (activeAppTab !== 'crm') e.currentTarget.style.backgroundColor = 'transparent' }}
+                >
+                    <Briefcase size={18} />
+                    CRM & Clients
+                </div>
             </div>
 
-            {/* Boards List */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 var(--spacing-sm)' }}>
-                <h4 style={{
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    color: 'var(--color-text-secondary)',
-                    padding: '0 12px',
-                    marginBottom: '8px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.8px',
-                    marginTop: '16px'
-                }}>
-                    Workspace
-                </h4>
-                <ul style={{ listStyle: 'none' }}>
-                    {boards.map(board => (
-                        <li key={board.id} style={{ marginBottom: '2px' }}>
-                            <div
-                                style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '10px 12px',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontSize: '14px',
-                                    fontWeight: activeBoardId === board.id ? '500' : '400',
-                                    color: activeBoardId === board.id ? 'var(--color-primary)' : 'var(--color-text-main)',
-                                    backgroundColor: activeBoardId === board.id ? 'var(--color-primary-light)' : 'transparent',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.1s'
-                                }}
-                                onClick={() => onSelectBoard(board.id)}
-                                onMouseOver={(e) => {
-                                    if (activeBoardId !== board.id) e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
-                                    const delBtn = e.currentTarget.querySelector('.delete-btn');
-                                    if (delBtn) delBtn.style.opacity = '1';
-                                }}
-                                onMouseOut={(e) => {
-                                    if (activeBoardId !== board.id) e.currentTarget.style.backgroundColor = 'transparent';
-                                    const delBtn = e.currentTarget.querySelector('.delete-btn');
-                                    if (delBtn) delBtn.style.opacity = '0';
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-                                    <Layout size={18} strokeWidth={activeBoardId === board.id ? 2.5 : 2} />
-                                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{board.title}</span>
+            <div style={{ display: activeAppTab === 'todo' ? 'block' : 'none', flex: 1, overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {/* Add Board Button */}
+                <div style={{ padding: '0 20px 10px' }}>
+                    <button
+                        onClick={onAddBoard}
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            backgroundColor: 'var(--color-primary-light)',
+                            color: 'var(--color-primary)',
+                            border: 'none',
+                            borderRadius: 'var(--radius-md)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            fontWeight: '500',
+                            fontSize: '14px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <Plus size={16} /> Nouveau Tableau
+                    </button>
+                </div>
+
+                {/* Boards List */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '0 var(--spacing-sm)' }}>
+                    <h4 style={{
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        color: 'var(--color-text-secondary)',
+                        padding: '0 12px',
+                        marginBottom: '8px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.8px',
+                        marginTop: '0px'
+                    }}>
+                        Workspace (Tâches)
+                    </h4>
+                    <ul style={{ listStyle: 'none' }}>
+                        {boards.map(board => (
+                            <li key={board.id} style={{ marginBottom: '2px' }}>
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        padding: '10px 12px',
+                                        borderRadius: 'var(--radius-md)',
+                                        fontSize: '14px',
+                                        fontWeight: activeBoardId === board.id ? '500' : '400',
+                                        color: activeBoardId === board.id ? 'var(--color-primary)' : 'var(--color-text-main)',
+                                        backgroundColor: activeBoardId === board.id ? 'var(--color-primary-light)' : 'transparent',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.1s'
+                                    }}
+                                    onClick={() => onSelectBoard(board.id)}
+                                    onMouseOver={(e) => {
+                                        if (activeBoardId !== board.id) e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
+                                        const delBtn = e.currentTarget.querySelector('.delete-btn');
+                                        if (delBtn) delBtn.style.opacity = '1';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        if (activeBoardId !== board.id) e.currentTarget.style.backgroundColor = 'transparent';
+                                        const delBtn = e.currentTarget.querySelector('.delete-btn');
+                                        if (delBtn) delBtn.style.opacity = '0';
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                                        <Layout size={18} strokeWidth={activeBoardId === board.id ? 2.5 : 2} />
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{board.title}</span>
+                                    </div>
+                                    {onDeleteBoard && (
+                                        <button
+                                            className="delete-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteBoard(board.id);
+                                            }}
+                                            style={{
+                                                opacity: 0,
+                                                border: 'none',
+                                                background: 'none',
+                                                color: 'var(--color-text-secondary)',
+                                                cursor: 'pointer',
+                                                padding: '4px',
+                                                borderRadius: '4px'
+                                            }}
+                                            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fed3d3'; e.currentTarget.style.color = '#e2445c'; }}
+                                            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
-                                {onDeleteBoard && (
-                                    <button
-                                        className="delete-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteBoard(board.id);
-                                        }}
-                                        style={{
-                                            opacity: 0,
-                                            border: 'none',
-                                            background: 'none',
-                                            color: 'var(--color-text-secondary)',
-                                            cursor: 'pointer',
-                                            padding: '4px',
-                                            borderRadius: '4px'
-                                        }}
-                                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#fed3d3'; e.currentTarget.style.color = '#e2445c'; }}
-                                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                )}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
 
             {/* Footer */}

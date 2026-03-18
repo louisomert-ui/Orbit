@@ -12,6 +12,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import Sidebar from './components/Sidebar';
 import BoardView from './components/BoardView';
+import CrmView from './components/CrmView';
 import { initialData } from './data/mockData';
 import { reorderGroups, moveItem } from './utils/dndUtils';
 
@@ -33,6 +34,9 @@ function App() {
 
   const [activeDragItem, setActiveDragItem] = useState(null); // For overlay
   const [activeDragGroupId, setActiveDragGroupId] = useState(null); // To track source group of dragging item
+
+  // App Tabs ('todo' or 'crm')
+  const [activeAppTab, setActiveAppTab] = useState('todo');
 
   // Security State
   const [unlockedBoardIds, setUnlockedBoardIds] = useState(new Set());
@@ -148,6 +152,54 @@ function App() {
   const handleUpdateItem = (boardId, groupId, itemId, updates) => {
     setBoards(boards.map(b => {
       if (b.id !== boardId) return b;
+
+      // Auto-archive: if status is changed to 'done'
+      if (updates.status === 'done') {
+        let archiveGroup = b.groups.find(g => g.title === 'Archives' || g.title === 'Archivés');
+        let newGroups = [...b.groups];
+
+        let archiveGroupId;
+        if (!archiveGroup) {
+          archiveGroupId = uuidv4();
+          archiveGroup = {
+            id: archiveGroupId,
+            title: 'Archives',
+            color: '#c4c4c4',
+            items: []
+          };
+          newGroups.push(archiveGroup);
+        } else {
+          archiveGroupId = archiveGroup.id;
+        }
+
+        // Only move if not already in Archives
+        if (groupId !== archiveGroupId) {
+          const sourceGroupIndex = newGroups.findIndex(g => g.id === groupId);
+          if (sourceGroupIndex > -1) {
+            const itemIndex = newGroups[sourceGroupIndex].items.findIndex(i => i.id === itemId);
+            if (itemIndex > -1) {
+              const itemToMove = { ...newGroups[sourceGroupIndex].items[itemIndex], ...updates };
+
+              // Remove from source
+              newGroups[sourceGroupIndex] = {
+                ...newGroups[sourceGroupIndex],
+                items: newGroups[sourceGroupIndex].items.filter(i => i.id !== itemId)
+              };
+
+              // Add to archive
+              const targetGroupIndex = newGroups.findIndex(g => g.id === archiveGroupId);
+              newGroups[targetGroupIndex] = {
+                ...newGroups[targetGroupIndex],
+                items: [...newGroups[targetGroupIndex].items, itemToMove]
+              };
+
+              return { ...b, groups: newGroups };
+            }
+          }
+        }
+      }
+
+      // Default behavior for other updates or if already in Archive group
       return {
         ...b,
         groups: b.groups.map(g => {
@@ -267,6 +319,8 @@ function App() {
     >
       <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
         <Sidebar
+          activeAppTab={activeAppTab}
+          onChangeAppTab={setActiveAppTab}
           boards={boards}
           activeBoardId={activeBoardId}
           onSelectBoard={setActiveBoardId}
@@ -274,20 +328,24 @@ function App() {
           onDeleteBoard={handleDeleteBoard}
         />
         <main style={{ flex: 1, backgroundColor: 'var(--color-bg-app)', overflow: 'hidden' }}>
-          <BoardView
-            board={activeBoard}
-            onUpdateBoard={handleUpdateBoard}
-            onDeleteBoard={handleDeleteBoard}
-            onAddGroup={handleCreateGroup}
-            onUpdateGroup={handleUpdateGroup}
-            onDeleteGroup={handleDeleteGroup}
-            onAddItem={handleCreateItem}
-            onUpdateItem={handleUpdateItem}
-            onDeleteItem={handleDeleteItem}
-            isUnlocked={activeBoard ? unlockedBoardIds.has(activeBoard.id) : false}
-            onUnlockBoard={handleUnlockBoard}
-            onUpdateSecurity={handleUpdateBoardSecurity}
-          />
+          {activeAppTab === 'crm' ? (
+            <CrmView />
+          ) : (
+            <BoardView
+              board={activeBoard}
+              onUpdateBoard={handleUpdateBoard}
+              onDeleteBoard={handleDeleteBoard}
+              onAddGroup={handleCreateGroup}
+              onUpdateGroup={handleUpdateGroup}
+              onDeleteGroup={handleDeleteGroup}
+              onAddItem={handleCreateItem}
+              onUpdateItem={handleUpdateItem}
+              onDeleteItem={handleDeleteItem}
+              isUnlocked={activeBoard ? unlockedBoardIds.has(activeBoard.id) : false}
+              onUnlockBoard={handleUnlockBoard}
+              onUpdateSecurity={handleUpdateBoardSecurity}
+            />
+          )}
         </main>
       </div>
       {/* Drag Overlay to show what we are dragging */}
