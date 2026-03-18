@@ -48,6 +48,17 @@ const CrmView = () => {
         item.contact.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Nouveau': return '#579bfc'; // Bleu
+            case 'En cours': return '#fdab3d'; // Orange
+            case 'En attente': return '#ffcb00'; // Jaune
+            case 'Gagné': return '#00c875'; // Vert
+            case 'Perdu': return '#e2445c'; // Rouge
+            default: return '#c4c4c4';
+        }
+    };
+
     const columns = ['Nom du Projet', 'Contact', 'Statut', 'Échéance', 'Commentaire', 'Actions'];
 
     const renderCell = (item, colIndex) => {
@@ -58,13 +69,42 @@ const CrmView = () => {
         if (colIndex === 0) return <input style={{ ...inputStyle, fontWeight: '500' }} value={item.name} onChange={e => handleUpdateItem(item.id, 'name', e.target.value)} />;
         if (colIndex === 1) return <input style={inputStyle} value={item.contact} onChange={e => handleUpdateItem(item.id, 'contact', e.target.value)} placeholder="Nom du contact..." />;
         if (colIndex === 2) return (
-            <select style={{ ...inputStyle, cursor: 'pointer', appearance: 'none', color: item.status === 'Gagné' ? '#00c875' : item.status === 'Nouveau' ? '#0073ea' : 'inherit' }} value={item.status} onChange={e => handleUpdateItem(item.id, 'status', e.target.value)}>
-                <option value="Nouveau">Nouveau</option>
-                <option value="En cours">En cours</option>
-                <option value="En attente">En attente</option>
-                <option value="Gagné">Gagné</option>
-                <option value="Perdu">Perdu</option>
-            </select>
+            <div style={{ position: 'relative', width: '100%', height: '34px', margin: '0 auto', display: 'flex' }}>
+                <select
+                    style={{
+                        ...inputStyle,
+                        cursor: 'pointer',
+                        appearance: 'none',
+                        backgroundColor: getStatusColor(item.status),
+                        color: 'white',
+                        fontWeight: '500',
+                        textAlign: 'center',
+                        textShadow: '0 1px 1px rgba(0,0,0,0.2)',
+                        height: '100%',
+                        transition: 'opacity 0.2s',
+                        outline: 'none',
+                        border: 'none',
+                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
+                    onMouseOut={e => e.currentTarget.style.opacity = '1'}
+                    value={item.status}
+                    onChange={e => handleUpdateItem(item.id, 'status', e.target.value)}
+                >
+                    <option style={{ backgroundColor: '#fff', color: '#333', textShadow: 'none' }} value="Nouveau">Nouveau</option>
+                    <option style={{ backgroundColor: '#fff', color: '#333', textShadow: 'none' }} value="En cours">En cours</option>
+                    <option style={{ backgroundColor: '#fff', color: '#333', textShadow: 'none' }} value="En attente">En attente</option>
+                    <option style={{ backgroundColor: '#fff', color: '#333', textShadow: 'none' }} value="Gagné">Gagné</option>
+                    <option style={{ backgroundColor: '#fff', color: '#333', textShadow: 'none' }} value="Perdu">Perdu</option>
+                </select>
+                {/* Fold effect corner (Monday signature) */}
+                <div style={{
+                    position: 'absolute', top: 0, right: 0, width: '0', height: '0',
+                    borderStyle: 'solid', borderWidth: '0 6px 6px 0',
+                    borderColor: `transparent rgba(0,0,0,0.15) transparent transparent`,
+                    pointerEvents: 'none'
+                }}></div>
+            </div>
         );
         if (colIndex === 3) return <input type="date" style={inputStyle} value={item.deadline || ''} onChange={e => handleUpdateItem(item.id, 'deadline', e.target.value)} />;
         if (colIndex === 4) return <input style={{ ...inputStyle, color: 'var(--color-text-secondary)', fontSize: '13px' }} value={item.comment} onChange={e => handleUpdateItem(item.id, 'comment', e.target.value)} placeholder="Ajouter une note..." />;

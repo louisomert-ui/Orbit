@@ -29,7 +29,8 @@ const ItemRow = ({ item, onUpdate, onDelete, groupId }) => {
         transform: CSS.Translate.toString(transform),
         transition,
         zIndex: isDragging ? 10 : 1,
-        opacity: isDragging ? 0.3 : 1
+        opacity: isDragging ? 0.4 : (item.status === 'done' ? 0.6 : 1),
+        filter: item.status === 'done' ? 'grayscale(80%)' : 'none',
     };
 
     // Helper for date color
@@ -103,7 +104,8 @@ const ItemRow = ({ item, onUpdate, onDelete, groupId }) => {
                             height: '100%',
                             padding: '8px 12px',
                             fontSize: '14px',
-                            color: 'var(--color-text-main)',
+                            color: item.status === 'done' ? 'var(--color-text-secondary)' : 'var(--color-text-main)',
+                            textDecoration: item.status === 'done' ? 'line-through' : 'none',
                             backgroundColor: 'transparent'
                         }}
                     />

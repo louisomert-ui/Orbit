@@ -152,54 +152,6 @@ function App() {
   const handleUpdateItem = (boardId, groupId, itemId, updates) => {
     setBoards(boards.map(b => {
       if (b.id !== boardId) return b;
-
-      // Auto-archive: if status is changed to 'done'
-      if (updates.status === 'done') {
-        let archiveGroup = b.groups.find(g => g.title === 'Archives' || g.title === 'Archivés');
-        let newGroups = [...b.groups];
-
-        let archiveGroupId;
-        if (!archiveGroup) {
-          archiveGroupId = uuidv4();
-          archiveGroup = {
-            id: archiveGroupId,
-            title: 'Archives',
-            color: '#c4c4c4',
-            items: []
-          };
-          newGroups.push(archiveGroup);
-        } else {
-          archiveGroupId = archiveGroup.id;
-        }
-
-        // Only move if not already in Archives
-        if (groupId !== archiveGroupId) {
-          const sourceGroupIndex = newGroups.findIndex(g => g.id === groupId);
-          if (sourceGroupIndex > -1) {
-            const itemIndex = newGroups[sourceGroupIndex].items.findIndex(i => i.id === itemId);
-            if (itemIndex > -1) {
-              const itemToMove = { ...newGroups[sourceGroupIndex].items[itemIndex], ...updates };
-
-              // Remove from source
-              newGroups[sourceGroupIndex] = {
-                ...newGroups[sourceGroupIndex],
-                items: newGroups[sourceGroupIndex].items.filter(i => i.id !== itemId)
-              };
-
-              // Add to archive
-              const targetGroupIndex = newGroups.findIndex(g => g.id === archiveGroupId);
-              newGroups[targetGroupIndex] = {
-                ...newGroups[targetGroupIndex],
-                items: [...newGroups[targetGroupIndex].items, itemToMove]
-              };
-
-              return { ...b, groups: newGroups };
-            }
-          }
-        }
-      }
-
-      // Default behavior for other updates or if already in Archive group
       return {
         ...b,
         groups: b.groups.map(g => {
